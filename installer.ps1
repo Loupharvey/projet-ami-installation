@@ -30,14 +30,17 @@ function Python-Present {
 function Installer($id, $nom, [scriptblock]$present) {
   if (& $present) { Write-Host "  $nom : déjà là"; return }
   Write-Host "  $nom : installation…"
-  winget install --id $id -e --silent --accept-source-agreements --accept-package-agreements --scope user | Out-Null
+  $sortie = winget install --id $id -e --source winget --silent --accept-source-agreements --accept-package-agreements --scope user 2>&1
   Rafraichir-Path
   if (-not (& $present)) {
-    winget install --id $id -e --silent --accept-source-agreements --accept-package-agreements | Out-Null
+    $sortie = winget install --id $id -e --source winget --silent --accept-source-agreements --accept-package-agreements 2>&1
     Rafraichir-Path
   }
   if (& $present) { Write-Host "  $nom : installé" }
-  else { Write-Host "  $nom : ÉCHEC" -ForegroundColor Red; $aFaire.Add("$nom ne s'est pas installé : relancer la ligne d'installation ; si ça échoue encore, l'installer à la main.") }
+  else {
+    Write-Host "  $nom : ÉCHEC (code $LASTEXITCODE)" -ForegroundColor Red
+    $sortie | Where-Object { "$_" -match '\w' -and "$_" -notmatch '^\s*[-\\|/]\s*$|█|▒' } | Select-Object -Last 5 | ForEach-Object { Write-Host "    $_" }
+    $aFaire.Add("$nom ne s'est pas installé : relancer la ligne d'installation ; si ça échoue encore, l'installer à la main.") }
 }
 
 Write-Host ''
