@@ -47,16 +47,23 @@ $prenom = $env:AMI_PRENOM
 while (-not $prenom) { $prenom = (Read-Host 'Ton prénom').Trim() }
 
 Etape '1. Gestionnaire de logiciels (winget)'
-if (Existe 'winget') { Write-Host '  winget : déjà là' }
+# winget manque dans le bac à sable de Windows et sur quelques vieux Windows : recette de Microsoft (module Microsoft.WinGet.Client).
+function Winget-Marche { try { $v = winget --version 2>$null; return ($LASTEXITCODE -eq 0 -and [bool]$v) } catch { return $false } }
+if (Winget-Marche) { Write-Host '  winget : déjà là' }
 else {
   Write-Host '  winget : installation (quelques minutes)…'
-  Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser | Out-Null
-  Install-Module Microsoft.WinGet.Client -Force -Scope CurrentUser -Repository PSGallery -AllowClobber | Out-Null
+  $ProgressPreference = 'SilentlyContinue'
+  $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+  $portee = if ($admin) { 'AllUsers' } else { 'CurrentUser' }
+  Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope $portee | Out-Null
+  Install-Module Microsoft.WinGet.Client -Force -Scope $portee -Repository PSGallery -AllowClobber | Out-Null
   Import-Module Microsoft.WinGet.Client
-  Repair-WinGetPackageManager -Latest -Force | Out-Null
+  if ($admin) { Repair-WinGetPackageManager -AllUsers -Force | Out-Null } else { Repair-WinGetPackageManager -Force | Out-Null }
+  $ProgressPreference = 'Continue'
   Rafraichir-Path
-  if (-not (Existe 'winget')) { $env:Path += ";$env:LOCALAPPDATA\Microsoft\WindowsApps" }
-  if (-not (Existe 'winget')) { throw "winget n'a pas pu être installé : installer « App Installer » depuis le Microsoft Store, puis relancer la ligne." }
+  if (-not ($env:Path -like "*Microsoft\WindowsApps*")) { $env:Path += ";$env:LOCALAPPDATA\Microsoft\WindowsApps" }
+  if (-not (Winget-Marche)) { throw "winget n'a pas pu être installé : installer « App Installer » depuis le Microsoft Store, puis relancer la ligne." }
+  Write-Host '  winget : installé'
 }
 
 Etape '2. Logiciels'
