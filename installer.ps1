@@ -72,6 +72,7 @@ Installer 'OpenJS.NodeJS.LTS' 'Node.js' { Existe 'node' }
 Installer 'Python.Python.3.13' 'Python' { Python-Present }
 Installer 'GitHub.cli' 'GitHub CLI' { Existe 'gh' }
 Installer 'Microsoft.VisualStudioCode' 'Visual Studio Code' { Existe 'code' }
+Installer 'Obsidian.Obsidian' 'Obsidian' { (Test-Path (Join-Path $env:LOCALAPPDATA 'Programs\Obsidian\Obsidian.exe')) -or (Test-Path (Join-Path $env:LOCALAPPDATA 'Obsidian\Obsidian.exe')) }
 if (Existe 'claude') { Write-Host '  Claude Code : déjà là' }
 else {
   Write-Host '  Claude Code : installation…'
@@ -150,7 +151,35 @@ Remove-Item Env:\REGLAGES
 Copy-Item (Join-Path $Depot 'outils\skills\*') (Join-Path $claudeDir 'skills') -Recurse -Force
 Write-Host "  skills : $((Get-ChildItem (Join-Path $Depot 'outils\skills') -Directory).Name -join ', ')"
 
-Etape '8. Icône « Agents » du bureau'
+Etape '8. Brain de Clara (privé, hors du dépôt partagé)'
+# Le coffre Obsidian de Clara : ce qui concerne la personne (agenda, contacts, rencontres). Il n'est jamais poussé vers le projet
+# et Loup ne le voit pas. On crée ce qui manque sans jamais toucher à ce qui existe.
+$brain = Join-Path $env:USERPROFILE 'Brain'
+foreach ($d in 'raw/assets', 'wiki/people', 'wiki/projects', 'wiki/meetings', 'wiki/tasks', 'wiki/topics', 'wiki/companies', '.obsidian') {
+  New-Item -ItemType Directory -Force (Join-Path $brain $d) | Out-Null
+}
+$aujourdhui = Get-Date -Format 'yyyy-MM-dd'
+$pages = [ordered]@{
+  'index.md' = "# Index du brain de Clara`n`nUne ligne par page du wiki : ``- [[Nom de la page]] : résumé (mis à jour : AAAA-MM-JJ)```n`n## Personnes`n`n## Projets`n`n## Rencontres`n`n## Tâches`n`n## Sujets`n`n## Organisations`n"
+  'log.md' = "# Journal du brain`n`nEn ajout seulement, le plus récent en bas.`n`n## [$aujourdhui] création | Coffre créé par l'installateur pour $prenom`n"
+  'wiki\overview.md' = "---`ntype: topic`ntags: []`ncreated: $aujourdhui`nupdated: $aujourdhui`nsources: []`n---`n`n# Vue d'ensemble`n`nCe qui se passe en ce moment pour $prenom : Clara tient cette page à jour.`n"
+  '.obsidian/app.json' = '{}'
+}
+foreach ($f in $pages.Keys) {
+  $chemin = Join-Path $brain $f
+  if (-not (Test-Path $chemin)) { [IO.File]::WriteAllText($chemin, $pages[$f], (New-Object Text.UTF8Encoding $false)) }
+}
+Write-Host "  coffre : $brain"
+# Clara (et elle seule) peut lire et écrire le coffre depuis sa fenêtre : réglage local, jamais poussé (.gitignore).
+$local = Join-Path $Depot 'Clara\.claude\settings.local.json'
+if (-not (Test-Path $local)) {
+  $env:BRAIN = $brain.Replace([char]92, [char]47)
+  $env:LOCAL = $local
+  node -e "require('fs').writeFileSync(process.env.LOCAL, JSON.stringify({permissions:{additionalDirectories:[process.env.BRAIN]}},null,2))"
+  Remove-Item Env:\BRAIN, Env:\LOCAL
+}
+
+Etape '9. Icône « Agents » du bureau'
 & (Join-Path $Depot 'outils\lanceur\creer-icone.ps1')
 
 Etape 'Terminé'
