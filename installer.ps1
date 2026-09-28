@@ -101,6 +101,7 @@ if (-not (Existe 'gh')) { throw 'GitHub CLI manque (voir plus haut) : relancer l
 gh auth status 2>&1 | Out-Null
 if ($LASTEXITCODE -ne 0) {
   Write-Host '  Une page GitHub va s''ouvrir : crée ton compte (ou connecte-toi), puis entre le code affiché ici.' -ForegroundColor Yellow
+  Write-Host '  Si la page ne s''ouvre pas : va à https://github.com/login/device (sur n''importe quel appareil) et entre le code.' -ForegroundColor Yellow
   gh auth login --web --git-protocol https --hostname github.com
 }
 gh auth setup-git 2>&1 | Out-Null
