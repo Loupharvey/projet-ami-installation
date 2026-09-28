@@ -186,7 +186,9 @@ if (-not (Test-Path $local)) {
 }
 
 Etape '9. Icône « Agents » du bureau'
-& (Join-Path $Depot 'outils\lanceur\creer-icone.ps1')
+# Dans un PowerShell à part, avec -ExecutionPolicy Bypass : sur bien des Windows, les fichiers de script sont interdits
+# (la ligne d'installation passe, car elle n'est pas un fichier). Vu chez Guillaume le 2026-09-27.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Depot 'outils\lanceur\creer-icone.ps1')
 
 Etape 'Terminé'
 $aFaire.Add('Double-clique l''icône « Agents » du bureau : Dave s''ouvre à gauche, Clara à droite.')
