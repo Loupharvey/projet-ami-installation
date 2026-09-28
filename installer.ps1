@@ -1,4 +1,4 @@
-# AMI-001 : installe chez l'ami de Loup une Clara et un Dave pour le projet commun (dépôt privé Loupharvey/projet-ami).
+﻿# AMI-001 : installe chez l'ami de Loup une Clara et un Dave pour le projet commun (dépôt privé Loupharvey/projet-ami).
 # Se lance en une ligne, dans PowerShell (pas besoin d'être administrateur ; Windows peut demander une permission) :
 #   irm https://raw.githubusercontent.com/Loupharvey/projet-ami-installation/main/installer.ps1 | iex
 # Rien du cabinet de Loup ici : ni client, ni secret, ni mémoire. Ce script est public : il ne doit jamais contenir de secret.
@@ -185,13 +185,17 @@ if (-not (Test-Path $local)) {
   Remove-Item Env:\BRAIN, Env:\LOCAL
 }
 
-Etape '9. Icône « Agents » du bureau'
+Etape '9. Icônes « Agents » et « Tableau Vice City » du bureau'
 # Dans un PowerShell à part, avec -ExecutionPolicy Bypass : sur bien des Windows, les fichiers de script sont interdits
 # (la ligne d'installation passe, car elle n'est pas un fichier). Vu chez Guillaume le 2026-09-27.
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Depot 'outils\lanceur\creer-icone.ps1')
+# VC-007 : le tableau des tâches (outils/tableau), ouvert dans le navigateur. Le fichier témoin évite que la synchro la repose.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Depot 'outils\tableau\creer-icone.ps1')
+Set-Content (Join-Path $Depot 'outils\tableau\icone-posee.txt') (Get-Date -Format 'yyyy-MM-dd HH:mm')
 
 Etape 'Terminé'
 $aFaire.Add('Double-clique l''icône « Agents » du bureau : Dave s''ouvre à gauche, Clara à droite.')
+$aFaire.Add('L''icône « Tableau Vice City » ouvre le tableau des tâches dans ton navigateur.')
 $aFaire.Add('La première fois, dans chaque fenêtre, connecte-toi à Claude (une page s''ouvre) et accepte de faire confiance au dossier.')
 $aFaire.Add('Clara lance ensuite d''elle-même le grill de l''application : réponds-lui avec Loup.')
 $aFaire.Add('Gmail et Google Agenda (facultatif) : sur claude.ai, Paramètres > Connecteurs, branche Gmail et Google Calendar ; Clara les verra au prochain démarrage.')
