@@ -79,7 +79,9 @@ Installer 'Obsidian.Obsidian' 'Obsidian' { (Test-Path (Join-Path $env:LOCALAPPDA
 if (Existe 'claude') { Write-Host '  Claude Code : déjà là' }
 else {
   Write-Host '  Claude Code : installation…'
-  Invoke-RestMethod https://claude.ai/install.ps1 | Invoke-Expression
+  # Dans sa propre portée : l'installateur de Claude règle $ErrorActionPreference à Stop, ce qui arrêterait la suite au moindre avertissement.
+  & { Invoke-RestMethod https://claude.ai/install.ps1 | Invoke-Expression }
+  $ErrorActionPreference = 'Continue'
   Rafraichir-Path
   if (Existe 'claude') { Write-Host '  Claude Code : installé' }
   else { $aFaire.Add('Claude Code ne s''est pas installé : relancer la ligne d''installation.') }
